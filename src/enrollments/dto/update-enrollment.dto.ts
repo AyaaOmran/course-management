@@ -1,7 +1,7 @@
-import { IsIn } from 'class-validator';
+import { IsEnum } from 'class-validator';
 import { EnrollmentStatus } from '../entities/enrollment.entity.js';
 
 export class UpdateEnrollmentDto {
-  @IsIn([EnrollmentStatus.CANCELLED])
+  @IsEnum(EnrollmentStatus)
   status: EnrollmentStatus;
 }

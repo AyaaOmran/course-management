@@ -1,9 +1,10 @@
-import { IsInt, Min } from 'class-validator';
+import { IsInt, IsOptional, Min } from 'class-validator';
 
 export class CreateEnrollmentDto {
+  @IsOptional()
   @IsInt()
   @Min(1)
-  studentId: number;
+  studentId?: number;
 
   @IsInt()
   @Min(1)

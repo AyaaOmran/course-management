@@ -7,6 +7,7 @@ import { Course } from '../../courses/entities/course.entity.js';
 export enum EnrollmentStatus {
   ACTIVE = 'ACTIVE',
   CANCELLED = 'CANCELLED',
+  COMPLETED = 'COMPLETED',
 }
 
 @Entity('enrollments')
