@@ -111,11 +111,9 @@ export class StudentsService {
     }
     const updatedStudent = await this.studentRepository.save(student);
         
-        // 2. احذفي الأسرار من النسخة المُرجعة (نستخدم as any لتجنب اعتراض TypeScript)
         delete (updatedStudent as any).password;
         delete (updatedStudent as any).refreshToken;
-        
-        // 3. أرجعي النتيجة النظيفة للـ Controller
+
         return updatedStudent;
   }
 

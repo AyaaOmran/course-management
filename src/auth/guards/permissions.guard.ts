@@ -1,22 +1,34 @@
-import {CanActivate, ExecutionContext, Injectable, ForbiddenException} from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PERMISSIONS_KEY } from '../decorators/permissions.decorator.js';
+import { IS_PUBLIC_KEY } from '../decorators/public.decorator.js';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
+    const isPublic = this.reflector.getAllAndOverride<boolean>(
+      IS_PUBLIC_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+
+    if (isPublic) {
+      return true;
+    }
+
     const requiredPermissions =
       this.reflector.getAllAndOverride<string[]>(
         PERMISSIONS_KEY,
-        [
-          context.getHandler(),
-          context.getClass(),
-        ],
+        [context.getHandler(), context.getClass()],
       );
 
-    if (!requiredPermissions || requiredPermissions.length === 0) {
+    if (!requiredPermissions?.length) {
       return true;
     }
 
@@ -24,7 +36,7 @@ export class PermissionsGuard implements CanActivate {
     const user = request.user;
 
     if (!user) {
-      return false;
+      throw new ForbiddenException();
     }
 
     const userPermissions: string[] = user.permissions ?? [];
@@ -34,7 +46,9 @@ export class PermissionsGuard implements CanActivate {
     );
 
     if (!hasPermission) {
-      throw new ForbiddenException('You do not have permission to perform this action');
+      throw new ForbiddenException(
+        'You do not have permission to perform this action',
+      );
     }
 
     return true;
