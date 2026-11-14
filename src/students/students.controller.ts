@@ -1,12 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe,HttpCode, HttpStatus, Req, UseGuards} from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe,HttpCode, HttpStatus, Req} from '@nestjs/common';
 import { StudentsService } from './students.service.js';
 import { CreateStudentDto } from './dto/create-student.dto.js';
 import { UpdateStudentDto } from './dto/update-student.dto.js';
 import { Permissions } from '../auth/decorators/permissions.decorator.js';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
-import { PermissionsGuard } from '../auth/guards/permissions.guard.js';
 
-@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('students')
 export class StudentsController {
   constructor(

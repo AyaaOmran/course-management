@@ -18,7 +18,6 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       ],
     );
 
-    console.log(`Route: ${context.getHandler().name} | isPublic: ${isPublic}`);
     
     if (isPublic) {
       return true;

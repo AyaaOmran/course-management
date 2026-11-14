@@ -1,6 +1,6 @@
 import {Injectable, NotFoundException, BadRequestException, ConflictException, ForbiddenException} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Not } from 'typeorm';
 import {Enrollment,EnrollmentStatus} from './entities/enrollment.entity.js';
 import { Student } from '../students/entities/student.entity.js';
 import { Course } from '../courses/entities/course.entity.js';
@@ -25,6 +25,17 @@ export class EnrollmentsService {
     @InjectRepository(Course)
     private readonly courseRepository: Repository<Course>,
   ) {}
+
+  private toResponse(enrollment: Enrollment) {
+      return {
+        id: enrollment.id,
+        studentId: enrollment.studentId,
+        courseId: enrollment.courseId,
+        priceAtEnrollment: enrollment.priceAtEnrollment,
+        status: enrollment.status,
+        enrolledAt: enrollment.enrolledAt,
+      };
+  }
 
   findAll() {
     return this.enrollmentRepository.find({
@@ -135,27 +146,41 @@ export class EnrollmentsService {
     const enrollment = this.enrollmentRepository.create({
       studentId: targetStudentId,
       courseId,
-      student,
-      course,
       priceAtEnrollment: finalPrice,
       status: EnrollmentStatus.ACTIVE,
     });
 
-    return this.enrollmentRepository.save(enrollment);
+    const saved = await this.enrollmentRepository.save(enrollment);
+
+    return this.toResponse(saved);
   }
 
   async update(id: number,updateEnrollmentDto: UpdateEnrollmentDto,currentUser: CurrentUser) {
     const enrollment = await this.findOne(id, currentUser);
 
     if (currentUser.role === 'student' && updateEnrollmentDto.status !== EnrollmentStatus.CANCELLED) {
-      throw new ForbiddenException(
-        'Students can only cancel their own enrollments',
-      );
+      throw new ForbiddenException('Students can only cancel their own enrollments');
     }
 
-    enrollment.status = updateEnrollmentDto.status;
+    const newStatus = updateEnrollmentDto.status;
 
-    return this.enrollmentRepository.save(enrollment);
+    if (newStatus === EnrollmentStatus.ACTIVE && enrollment.status !== EnrollmentStatus.ACTIVE) {
+      const duplicate = await this.enrollmentRepository.existsBy({
+        studentId: enrollment.studentId,
+        courseId: enrollment.courseId,
+        status: EnrollmentStatus.ACTIVE,
+        id: Not(enrollment.id),
+      });
+
+      if (duplicate) {
+        throw new ConflictException('Student already has an active enrollment in this course');
+      }
+    }
+
+    enrollment.status = newStatus;
+
+    const saved = await this.enrollmentRepository.save(enrollment);
+    return this.toResponse(saved);
   }
 
   async remove(id: number,currentUser: CurrentUser): Promise<void> {

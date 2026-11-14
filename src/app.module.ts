@@ -9,15 +9,14 @@ import { AdminsModule } from './admins/admins.module.js';
 import { EnrollmentsModule } from './enrollments/enrollments.module.js';
 import { RolesModule } from './roles/roles.module.js';
 import { AuthModule } from './auth/auth.module.js';
-import { APP_GUARD } from '@nestjs/core';
+import { UniqueViolationFilter } from './common/filters/unique-violation.filter.js';
+import { APP_GUARD, APP_FILTER } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard.js';
 import { PermissionsGuard } from './auth/guards/permissions.guard.js';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
+    ConfigModule.forRoot({isGlobal: true}),
 
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -44,14 +43,9 @@ import { PermissionsGuard } from './auth/guards/permissions.guard.js';
   ],
   controllers: [AppController],
   providers: [AppService, 
-              // {
-              //   provide: APP_GUARD,
-              //   useClass: JwtAuthGuard,
-              // },
-              // {
-              //   provide: APP_GUARD,
-              //   useClass: PermissionsGuard,
-              // },
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: PermissionsGuard },
+    { provide: APP_FILTER, useClass: UniqueViolationFilter },
 ],
 
 })

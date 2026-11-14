@@ -1,8 +1,7 @@
-import { Injectable , NotFoundException, ConflictException, ForbiddenException,BadRequestException} from '@nestjs/common';
+import { Injectable , NotFoundException, ForbiddenException,BadRequestException} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, QueryFailedError } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Student } from './entities/student.entity.js';
-import { Admin } from '../admins/entities/admin.entity.js';
 import { Role } from '../roles/entities/role.entity.js';
 import { Enrollment } from '../enrollments/entities/enrollment.entity.js';
 import { CreateStudentDto } from './dto/create-student.dto.js';
@@ -77,7 +76,6 @@ export class StudentsService {
       name: savedStudent.name,
       email: savedStudent.email,
       phone: savedStudent.phone,
-      role: 'student',
       createdAt: savedStudent.createdAt,
     };
   }
@@ -99,22 +97,26 @@ export class StudentsService {
           id,
         },
       );
+      student.email = updateStudentDto.email;
     }
 
-    if (currentUser.role === 'student') {
-      Object.assign(student, {
-        name: updateStudentDto.name,
-        phone: updateStudentDto.phone,
-      });
-    } else {
-      Object.assign(student, updateStudentDto);
+    if (updateStudentDto.name !== undefined) {
+      student.name = updateStudentDto.name;
     }
-    const updatedStudent = await this.studentRepository.save(student);
-        
-        delete (updatedStudent as any).password;
-        delete (updatedStudent as any).refreshToken;
 
-        return updatedStudent;
+    if (updateStudentDto.phone !== undefined) {
+      student.phone = updateStudentDto.phone;
+    }
+
+    const saved = await this.studentRepository.save(student);
+
+    return {
+      id: saved.id,
+      name: saved.name,
+      email: saved.email,
+      phone: saved.phone,
+      createdAt: saved.createdAt,
+    };
   }
 
   async remove(id:number,currentUser: CurrentUser): Promise<void>{

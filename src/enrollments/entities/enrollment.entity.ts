@@ -1,4 +1,4 @@
-import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn} from 'typeorm';
+import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, Index} from 'typeorm';
 import type { Relation } from 'typeorm';
 import { Student } from '../../students/entities/student.entity.js';
 import { Course } from '../../courses/entities/course.entity.js';
@@ -11,6 +11,7 @@ export enum EnrollmentStatus {
 }
 
 @Entity('enrollments')
+@Index('uq_enrollments_active_student_course', ['studentId', 'courseId'], {unique: true,where: `"status" = 'ACTIVE'`})
 export class Enrollment {
   @PrimaryGeneratedColumn()
   id: number;

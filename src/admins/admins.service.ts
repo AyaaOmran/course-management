@@ -68,7 +68,6 @@ export class AdminsService {
       id: savedAdmin.id,
       name: savedAdmin.name,
       email: savedAdmin.email,
-      role: 'admin',
       createdAt: savedAdmin.createdAt,
     };
   }
@@ -100,7 +99,6 @@ export class AdminsService {
       id: updatedAdmin.id,
       name: updatedAdmin.name,
       email: updatedAdmin.email,
-      role: 'admin',
       createdAt: updatedAdmin.createdAt,
     };
   }

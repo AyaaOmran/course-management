@@ -1,12 +1,10 @@
-import {Controller, Get, Post, Patch, Delete, Body, Param, ParseIntPipe, HttpCode, HttpStatus, Req, UseGuards} from '@nestjs/common';
+import {Controller, Get, Post, Patch, Delete, Body, Param, ParseIntPipe, HttpCode, HttpStatus, Req} from '@nestjs/common';
 import { AdminsService } from './admins.service.js';
 import { CreateAdminDto } from './dto/create-admin.dto.js';
 import { UpdateAdminDto } from './dto/update-admin.dto.js';
 import { Permissions } from '../auth/decorators/permissions.decorator.js';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
-import { PermissionsGuard } from '../auth/guards/permissions.guard.js';
 
-@UseGuards(JwtAuthGuard, PermissionsGuard)
+
 @Controller('admins')
 export class AdminsController {
   constructor(private readonly adminsService: AdminsService) {}

@@ -2,7 +2,7 @@ import {Injectable,InternalServerErrorException,UnauthorizedException} from '@ne
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { Student } from '../students/entities/student.entity.js';
 import { Admin } from '../admins/entities/admin.entity.js';
 import { Role } from '../roles/entities/role.entity.js';
@@ -60,7 +60,7 @@ export class AuthService {
             name: savedStudent.name,
             email: savedStudent.email,
             phone: savedStudent.phone,
-            role: studentRole.name,
+            createdAt: savedStudent.createdAt,
         };
     }
 
@@ -130,6 +130,7 @@ export class AuthService {
         {
             expiresIn: '7d',
             secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
+            jwtid: randomUUID()
         },
         );
 
@@ -159,6 +160,11 @@ export class AuthService {
 
     async refresh(refreshDto: RefreshDto) {
         const { refreshToken } = refreshDto;
+
+        if (typeof refreshToken !== 'string' || refreshToken.length === 0) {
+            throw new UnauthorizedException('Invalid refresh token');
+        }
+
         let payload;
 
         try {

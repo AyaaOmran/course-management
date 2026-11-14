@@ -25,7 +25,7 @@ export class EmailUniquenessService {
   ): Promise<void> {
     const [admin, student] = await Promise.all([
       this.adminRepository.findOneBy({ email }),
-      this.studentRepository.findOneBy({ email }),
+      this.studentRepository.findOne({ where: { email }, withDeleted: true }),
     ]);
 
     const adminConflict =

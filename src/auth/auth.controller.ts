@@ -1,11 +1,11 @@
-import { Controller, Post, Body, Req, HttpCode, HttpStatus, UseGuards} from '@nestjs/common';
+import { Controller, Post, Body, Req, HttpCode, HttpStatus} from '@nestjs/common';
 import { AuthService } from './auth.service.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { RefreshDto } from './dto/refresh.dto.js';
 import { LoginDto } from './dto/login.dto.js';
 import { Public } from './decorators/public.decorator.js';
 import type { Request } from 'express';
-import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
+
 
 @Controller('auth')
 export class AuthController {
@@ -31,7 +31,6 @@ export class AuthController {
     return this.authService.refresh(refreshDto);
     } 
     
-    @UseGuards(JwtAuthGuard)
     @Post('logout')
     @HttpCode(HttpStatus.NO_CONTENT)
     logout(@Req() req: Request) {
