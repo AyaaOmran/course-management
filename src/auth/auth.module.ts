@@ -10,11 +10,12 @@ import { Role } from '../roles/entities/role.entity.js';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './strategies/jwt.strategy.js';
 import { EmailUniquenessModule } from '../common/email-uniqueness/email-uniqueness.module.js';
+import { Permission } from '../permissions/entities/permission.entity.js';
 
 @Module({
   imports: [
     PassportModule,
-    TypeOrmModule.forFeature([Student, Admin, Role]),
+    TypeOrmModule.forFeature([Student, Admin, Role, Permission]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

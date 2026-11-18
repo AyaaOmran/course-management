@@ -1,9 +1,9 @@
 import { Injectable , NotFoundException, ForbiddenException,BadRequestException} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Student } from './entities/student.entity.js';
 import { Role } from '../roles/entities/role.entity.js';
-import { Enrollment } from '../enrollments/entities/enrollment.entity.js';
+import { Enrollment, EnrollmentStatus} from '../enrollments/entities/enrollment.entity.js';
 import { CreateStudentDto } from './dto/create-student.dto.js';
 import { UpdateStudentDto } from './dto/update-student.dto.js';
 import { EmailUniquenessService } from '../common/email-uniqueness/email-uniqueness.service.js';
@@ -23,6 +23,7 @@ export class StudentsService {
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
     private readonly emailUniquenessService: EmailUniquenessService,
+    private readonly dataSource: DataSource,
   ){}
   
   findAll() {
@@ -119,9 +120,26 @@ export class StudentsService {
     };
   }
 
-  async remove(id:number,currentUser: CurrentUser): Promise<void>{
-    const student = await this.findOne(id,currentUser)
-    await this.studentRepository.softRemove(student)
+  async remove(id: number): Promise<void> {
+    await this.dataSource.transaction(async (manager) => {
+      const student = await manager.findOne(Student, {
+        where: { id },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!student) {
+        throw new NotFoundException('student not found!');
+      }
+
+      await manager.update(
+        Enrollment,
+        { studentId: id, status: EnrollmentStatus.ACTIVE },
+        { status: EnrollmentStatus.CANCELLED },
+      );
+
+      
+      await manager.softRemove(student);
+    });
   }
 
   async findEnrollments(studentId: number, currentUser: CurrentUser,) {
@@ -132,6 +150,7 @@ export class StudentsService {
       relations: {
         course: true,
       },
+      withDeleted: true,
     });
 
     return enrollments.map((enrollment) => ({

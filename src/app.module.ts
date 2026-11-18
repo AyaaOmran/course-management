@@ -7,7 +7,6 @@ import { StudentsModule } from './students/students.module.js';
 import { CoursesModule } from './courses/courses.module.js';
 import { AdminsModule } from './admins/admins.module.js';
 import { EnrollmentsModule } from './enrollments/enrollments.module.js';
-import { RolesModule } from './roles/roles.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { UniqueViolationFilter } from './common/filters/unique-violation.filter.js';
 import { APP_GUARD, APP_FILTER } from '@nestjs/core';
@@ -29,8 +28,7 @@ import { PermissionsGuard } from './auth/guards/permissions.guard.js';
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
         autoLoadEntities: true,
-        synchronize:
-          configService.get<string>('DB_SYNCHRONIZE') === 'true',
+        synchronize:false,
       }),
     }),
 
@@ -38,7 +36,6 @@ import { PermissionsGuard } from './auth/guards/permissions.guard.js';
     CoursesModule,
     AdminsModule,
     EnrollmentsModule,
-    RolesModule,
     AuthModule,
   ],
   controllers: [AppController],

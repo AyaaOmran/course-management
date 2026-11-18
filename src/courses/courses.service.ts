@@ -112,6 +112,7 @@ export class CoursesService {
         relations: {
           student: true, 
         },
+        withDeleted: true,
       });
 
       return enrollments.map((enrollment) => ({

@@ -12,6 +12,8 @@ export enum EnrollmentStatus {
 
 @Entity('enrollments')
 @Index('uq_enrollments_active_student_course', ['studentId', 'courseId'], {unique: true,where: `"status" = 'ACTIVE'`})
+@Index('idx_enrollments_student_course', ['studentId', 'courseId'])
+@Index('idx_enrollments_course', ['courseId'])
 export class Enrollment {
   @PrimaryGeneratedColumn()
   id: number;

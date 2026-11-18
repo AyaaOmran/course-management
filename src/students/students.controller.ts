@@ -41,8 +41,8 @@ export class StudentsController {
   @Permissions('student:delete')
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
-    return this.studentsService.remove(id, req.user);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.studentsService.remove(id);
   }
 
   @Permissions('enrollment:read')

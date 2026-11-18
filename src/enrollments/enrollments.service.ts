@@ -1,6 +1,7 @@
 import {Injectable, NotFoundException, BadRequestException, ConflictException, ForbiddenException} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not } from 'typeorm';
+import { DataSource, Not } from 'typeorm';
+import type { Repository } from 'typeorm';
 import {Enrollment,EnrollmentStatus} from './entities/enrollment.entity.js';
 import { Student } from '../students/entities/student.entity.js';
 import { Course } from '../courses/entities/course.entity.js';
@@ -19,11 +20,7 @@ export class EnrollmentsService {
     @InjectRepository(Enrollment)
     private readonly enrollmentRepository: Repository<Enrollment>,
 
-    @InjectRepository(Student)
-    private readonly studentRepository: Repository<Student>,
-
-    @InjectRepository(Course)
-    private readonly courseRepository: Repository<Course>,
+    private readonly dataSource: DataSource,
   ) {}
 
   private toResponse(enrollment: Enrollment) {
@@ -83,74 +80,63 @@ export class EnrollmentsService {
 
     if (currentUser.role === 'admin') {
       if (studentId === undefined) {
-        throw new BadRequestException(
-          'studentId is required for admins',
-        );
+        throw new BadRequestException('studentId is required for admins');
       }
 
       targetStudentId = studentId;
     } else {
       if (studentId !== undefined) {
-        throw new BadRequestException(
-          'Students cannot provide studentId',
-        );
+        throw new BadRequestException('Students cannot provide studentId');
       }
 
       targetStudentId = currentUser.sub;
     }
 
-    const [student, course] = await Promise.all([
-      this.studentRepository.findOneBy({
-        id: targetStudentId,
-      }),
-      this.courseRepository.findOneBy({
-        id: courseId,
-      }),
-    ]);
+    const saved = await this.dataSource.transaction(async (manager) => {
+      const student = await manager.findOne(Student, {
+        where: { id: targetStudentId },
+        lock: { mode: 'pessimistic_read' },
+      });
 
-    if (!student) {
-      throw new NotFoundException('Student not found');
-    }
+      if (!student) {
+        throw new NotFoundException('Student not found');
+      }
 
-    if (!course) {
-      throw new NotFoundException('Course not found');
-    }
+      const course = await manager.findOneBy(Course, { id: courseId });
 
-    if (!course.isActive) {
-      throw new BadRequestException(
-        'Cannot enroll in an inactive course',
-      );
-    }
+      if (!course) {
+        throw new NotFoundException('Course not found');
+      }
 
-    const existingEnrollment =
-      await this.enrollmentRepository.findOneBy({
+      if (!course.isActive) {
+        throw new BadRequestException('Cannot enroll in an inactive course');
+      }
+
+      const alreadyActive = await manager.existsBy(Enrollment, {
         studentId: targetStudentId,
         courseId,
         status: EnrollmentStatus.ACTIVE,
       });
 
-    if (existingEnrollment) {
-      throw new ConflictException(
-        'Student is already enrolled in this course',
+      if (alreadyActive) {
+        throw new ConflictException('Student is already enrolled in this course');
+      }
+
+      const strategy = discountStrategies[course.discountType];
+
+      const finalPrice = Number(
+        strategy.calculate(course.price, course.discountValue).toFixed(2),
       );
-    }
 
-    const strategy = discountStrategies[course.discountType];
-
-    const finalPrice = Number(
-      strategy
-        .calculate(course.price, course.discountValue)
-        .toFixed(2),
-    );
-
-    const enrollment = this.enrollmentRepository.create({
-      studentId: targetStudentId,
-      courseId,
-      priceAtEnrollment: finalPrice,
-      status: EnrollmentStatus.ACTIVE,
+      return manager.save(
+        manager.create(Enrollment, {
+          studentId: targetStudentId,
+          courseId,
+          priceAtEnrollment: finalPrice,
+          status: EnrollmentStatus.ACTIVE,
+        }),
+      );
     });
-
-    const saved = await this.enrollmentRepository.save(enrollment);
 
     return this.toResponse(saved);
   }
