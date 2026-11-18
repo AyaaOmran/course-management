@@ -12,7 +12,6 @@ The API includes JWT authentication, role-based permissions, and database operat
 - **PostgreSQL** – Relational database
 - **JWT** – Authentication
 - **class-validator** – Request validation
-- **Vitest** – Testing
 
 ## Features
 
